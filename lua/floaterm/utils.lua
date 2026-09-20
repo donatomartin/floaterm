@@ -136,6 +136,12 @@ M.switch_buf = function(buf)
 
   if term.mode == "t" or (term.mode == nil and state.config.autoinsert) then
     vim.cmd.startinsert()
+  else
+    vim.cmd.stopinsert()
+  end
+
+  if term.view then
+    vim.fn.winrestview(term.view)
   end
 
 end
