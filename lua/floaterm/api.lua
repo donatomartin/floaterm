@@ -41,10 +41,13 @@ end
 M.switch_wins = function()
   local curwin = vim.api.nvim_get_current_win()
 
+  if curwin == state.win then
+    utils.save_term_state()
+  end
+
   local newwin = curwin == state.win and "sidewin" or "win"
   vim.api.nvim_set_current_win(state[newwin])
 end
-
 M.cycle_term_bufs = function(direction)
   if not state.terminals or #state.terminals == 0 then
     return
@@ -118,6 +121,41 @@ M.send_cmd = function(opts)
     vim.api.nvim_buf_call(bufdetails.buf, function()
       vim.cmd [[normal G]]
     end)
+  end
+end
+
+local float_configs = {}
+M.toggle_fullscreen = function()
+
+  local win = vim.api.nvim_get_current_win()
+  local config = vim.api.nvim_win_get_config(win)
+
+  -- Not a floating window
+  if config.relative == "" then
+    return
+  end
+
+
+  if float_configs[win] then
+    -- Restore original float config
+    vim.api.nvim_win_set_config(win, float_configs[win])
+    float_configs[win] = nil
+  else
+    -- Save original config
+
+    float_configs[win] = vim.deepcopy(config)
+
+    -- Make the float fill the editor
+    vim.api.nvim_win_set_config(win, {
+
+      relative = "editor",
+
+      row = 0,
+      col = 0,
+      width = vim.o.columns,
+      height = vim.o.lines - vim.o.cmdheight,
+      border = "none",
+    })
   end
 end
 

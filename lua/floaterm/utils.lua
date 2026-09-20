@@ -47,9 +47,37 @@ M.set_termwin_hl = function()
   end
 end
 
-M.switch_buf = function(buf)
-  state.buf = buf
+M.save_term_state = function()
 
+  if not state.buf or not state.win or not api.nvim_win_is_valid(state.win) then
+
+    return
+  end
+
+  local term = M.get_term_by_key(state.buf)
+
+
+  if not term or api.nvim_win_get_buf(state.win) ~= state.buf then
+    return
+  end
+
+  term = term[2]
+
+  term.view = api.nvim_win_call(state.win, function()
+    return vim.fn.winsaveview()
+  end)
+
+  if api.nvim_get_current_win() == state.win then
+    term.mode = vim.fn.mode()
+  end
+end
+
+M.switch_buf = function(buf)
+  if state.buf and state.buf ~= buf then
+    M.save_term_state()
+  end
+
+  state.buf = buf
   volt_redraw(state.sidebuf, "bufs")
   volt_redraw(state.barbuf, "bar")
 
@@ -100,9 +128,16 @@ M.switch_buf = function(buf)
     end
   end
 
-  if state.config.autoinsert then
+  local term = details[1]
+
+  if term.view then
+    vim.fn.winrestview(term.view)
+  end
+
+  if term.mode == "t" or (term.mode == nil and state.config.autoinsert) then
     vim.cmd.startinsert()
   end
+
 end
 
 M.get_term_by_key = function(tocompare, name)

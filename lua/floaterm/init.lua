@@ -144,6 +144,8 @@ end
 
 M.toggle = function()
   if state.volt_set then
+    utils.save_term_state()
+
     api.nvim_win_close(state.win, false)
     api.nvim_win_close(state.barwin, false)
     api.nvim_win_close(state.sidewin, false)
